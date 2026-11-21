@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TWO OF US",
+      "hasCanvas": false,
+      "bodyTextLen": 43,
+      "bodyTextHash": "7d8882b3691043a1eb3baf1feb7039719b1485f86df434d696d59ac88e6e0ed3",
+      "bodyTextPrefix": "TWO OF US Every question brings you closer.",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TWO OF US",
+      "hasCanvas": false,
+      "bodyTextLen": 43,
+      "bodyTextHash": "7d8882b3691043a1eb3baf1feb7039719b1485f86df434d696d59ac88e6e0ed3",
+      "bodyTextPrefix": "TWO OF US Every question brings you closer.",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
