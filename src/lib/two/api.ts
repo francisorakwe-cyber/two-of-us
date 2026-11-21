@@ -562,7 +562,7 @@ export const saveProfile = createServerFn({ method: "POST" }).middleware([authMi
     const displayName = data.displayName.trim();
     if (!displayName) return fail("Add a display name.");
     const yearNow = Number((await today(sql)).slice(0, 4));
-    let birthYear = data.birthYear ?? null;
+    const birthYear = data.birthYear ?? null;
     if (birthYear != null && (birthYear < 1920 || birthYear > yearNow)) return fail("Check the birth year.");
     let ageConfirmed = Boolean(data.ageConfirmed);
     if (birthYear != null && yearNow - birthYear < 18) ageConfirmed = false;
@@ -1306,6 +1306,9 @@ export const getProgress = createServerFn({ method: "GET" }).middleware([authMid
   }
   const favourite = Object.entries(byCategory).sort((a, b) => b[1] - a[1])[0];
   const streak = await streakFor(sql, context.userId);
+  const dayRows = await sql<{ day: string }>`
+    select day from activity_days where user_id = ${context.userId} order by day desc limit 120`;
+  const activeDays = dayRows.map((row) => String(row.day).slice(0, 10));
   const stats = {
     gamesCompleted: completed.length,
     answers: num(answerCount[0]?.n),
@@ -1330,6 +1333,7 @@ export const getProgress = createServerFn({ method: "GET" }).middleware([authMid
     favourite: favourite ? categoryName(favourite[0]) : null,
     badges: achievementList(stats),
     chart,
+    activeDays,
     recent: completed.slice(0, 6).map((game) => ({
       id: game.id,
       label: categoryName(game.category),

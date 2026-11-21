@@ -102,6 +102,11 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
+  // Alternate local ports, so `npm run dev -- --port 8099` (or any spare port)
+  // still signs in instead of failing with "Invalid origin".
+  "http://localhost:8099",
+  "http://127.0.0.1:8099",
+  "http://[::1]:8099",
 ];
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password

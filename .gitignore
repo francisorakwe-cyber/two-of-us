@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.vercel/
+.output/
+dist/
+build/
+.tanstack/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test / QA artifacts
+coverage/
+playwright-report/
+test-results/
+screenshots/*.png
+!screenshots/.gitkeep
+
+# Local scratch
+*.local
+.node_modules.lock

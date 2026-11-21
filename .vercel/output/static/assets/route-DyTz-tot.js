@@ -1,1 +1,0 @@
-import{o as e}from"./useSelector-IsjtmKdv.js";import{t}from"./shell-D_3QETyb.js";import{r as n}from"./index-BWKD_XM3.js";var r=e(),i=function(){return(0,r.jsx)(t,{children:(0,r.jsx)(n,{})})};export{i as component};

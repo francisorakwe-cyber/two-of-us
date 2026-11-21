@@ -4,76 +4,245 @@ import { authClient, GROK_PROVIDERS, signIn } from "@/lib/auth/client";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { confirmReset, requestReset, saveProfile } from "@/lib/two/api";
-import { Button, ErrorNote, Field, Logo, Splash } from "./ui";
+import { Button, ErrorNote, Field, Logo, Pill, Splash, Wordmark } from "./ui";
+
+const FEATURES = [
+  {
+    title: "Answer apart, reveal together",
+    body: "You each reply in private. Nothing is shown until both of you have submitted — enforced on the server, not just hidden on screen.",
+  },
+  {
+    title: "Seven ways to ask",
+    body: "Getting to know you, how well do you know me, love, deep conversations, fun, would you rather, and truth or dare.",
+  },
+  {
+    title: "A daily question",
+    body: "One question a day, the same for both of you. A gentle rhythm that does not punish a missed day.",
+  },
+  {
+    title: "Notes and memories",
+    body: "Leave a private note, save a favourite answer, and watch finished rounds gather into a shared history.",
+  },
+  {
+    title: "Built for distance",
+    body: "Two phones, two cities, two time zones. Take turns or answer together — the round waits for you.",
+  },
+  {
+    title: "No compatibility score",
+    body: "Matching answers are a moment, not a grade. Different answers are a conversation, not a verdict.",
+  },
+] as const;
+
+const STEPS = [
+  { n: "01", title: "Create your account", body: "A name, an email, a password. Or continue with Google or X." },
+  { n: "02", title: "Invite your person", body: "Search their username, or hold an email invite until they join." },
+  { n: "03", title: "Start a round", body: "Pick a category, answer in private, and reveal when you are both in." },
+] as const;
 
 export function WelcomePage() {
   const { user, isPending } = useCurrentUserState();
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    if (step !== 0) return;
-    const timer = window.setTimeout(() => setStep(1), 900);
-    return () => window.clearTimeout(timer);
-  }, [step]);
   if (isPending) return <Splash />;
   if (user) return <Navigate to="/" />;
-  const slides = [
-    {
-      title: "Answer apart. Reveal together.",
-      body: "You each reply in private. Nothing is shown until both of you have submitted.",
-    },
-    {
-      title: "One partner. A shared space.",
-      body: "Find them by username, or hold an email invite until they join.",
-    },
-    {
-      title: "Questions with somewhere to go.",
-      body: "Light, romantic, or serious. Different answers are a conversation, not a score.",
-    },
-  ];
+
   return (
-    <main className="grid min-h-dvh bg-cream px-6 py-10 text-ink">
-      <div className="mx-auto flex w-full max-w-md flex-col">
-        <Logo />
-        {step === 0 ? (
-          <div className="my-auto">
-            <h1 className="font-display text-5xl">TWO OF US</h1>
-            <p className="mt-3 text-muted">Every question brings you closer.</p>
-          </div>
-        ) : (
-          <div className="my-auto rise">
-            <p className="text-sm text-muted">0{step} / 03</p>
-            <h1 className="mt-3 font-display text-4xl">{slides[step - 1]?.title}</h1>
-            <p className="mt-4 text-base leading-relaxed text-muted">{slides[step - 1]?.body}</p>
-          </div>
-        )}
-        <div className="space-y-3">
-          {step > 0 && step < 3 ? (
-            <Button className="w-full" onClick={() => setStep((value) => value + 1)}>
-              Continue
-            </Button>
-          ) : null}
-          {step === 3 ? (
-            <>
-              <Link to="/join" className="flex min-h-11 items-center justify-center rounded-full bg-rose-deep px-5 text-sm font-medium text-paper">
-                Create an account
-              </Link>
-              <Link to="/login" className="flex min-h-11 items-center justify-center rounded-full border border-line bg-paper px-5 text-sm font-medium">
-                I already have one
-              </Link>
-            </>
-          ) : null}
+    <main className="min-h-dvh bg-cream text-ink">
+      {/* Nav */}
+      <header className="sticky top-0 z-30 border-b border-line/70 glass">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-3.5 lg:px-8">
+          <Wordmark compact />
+          <nav className="flex items-center gap-2">
+            <Link
+              to="/login"
+              className="hidden min-h-9 items-center rounded-full px-4 text-sm font-medium text-muted transition-colors hover:text-ink sm:inline-flex"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/join"
+              className="inline-flex min-h-9 items-center rounded-full bg-rose-deep px-4 text-sm font-medium text-paper transition hover:brightness-110"
+            >
+              Get started
+            </Link>
+          </nav>
         </div>
-      </div>
+      </header>
+
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="surface-wash absolute inset-0" aria-hidden="true" />
+        <div className="surface-grid absolute inset-0 opacity-60" aria-hidden="true" />
+        <div className="relative mx-auto w-full max-w-6xl px-5 pb-16 pt-16 lg:px-8 lg:pb-24 lg:pt-24">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="rise">
+              <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper/80 px-3 py-1.5 text-xs font-medium text-muted">
+                <span className="h-1.5 w-1.5 rounded-full bg-rose pulse-ring" />
+                A private game for two
+              </span>
+              <h1 className="mt-5 font-display text-5xl leading-[1.05] tracking-tight lg:text-6xl">
+                Every question
+                <br />
+                brings you <span className="text-gradient">closer</span>.
+              </h1>
+              <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
+                Two of Us is a question game for couples — including the long-distance kind. Answer
+                in private, reveal together, and keep the conversations that matter.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/join"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-rose-deep px-7 text-sm font-medium text-paper shadow-[var(--shadow-soft)] transition hover:brightness-110 active:scale-[0.99]"
+                >
+                  Create your account
+                </Link>
+                <Link
+                  to="/login"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-paper px-7 text-sm font-medium transition hover:border-rose/60"
+                >
+                  I already have one
+                </Link>
+              </div>
+              <p className="mt-5 text-xs text-muted">
+                Free to play · No compatibility score · Skip anything, nothing is owed
+              </p>
+            </div>
+
+            {/* Hero card mock */}
+            <div className="relative mx-auto w-full max-w-sm lg:max-w-none">
+              <div className="float-slow rounded-[2rem] border border-line bg-paper p-5 shadow-[var(--shadow-lift)]">
+                <div className="flex items-center justify-between">
+                  <Pill tone="rose">Question 3 of 8</Pill>
+                  <span className="text-xs text-muted">Love &amp; Romance</span>
+                </div>
+                <p className="mt-5 font-display text-2xl leading-snug">
+                  What small thing does the other person do that you would miss most?
+                </p>
+                <div className="mt-5 space-y-2.5">
+                  <div className="rounded-2xl border border-line bg-cream px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">You</p>
+                    <p className="mt-1 text-sm">The way you hum while making coffee.</p>
+                  </div>
+                  <div className="rounded-2xl border border-rose/30 bg-blush px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">Them</p>
+                    <p className="mt-1 text-sm">How you always leave a light on for me.</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <Pill tone="sage">Revealed</Pill>
+                  <Pill tone="lavender">Both answered</Pill>
+                </div>
+              </div>
+              <div className="absolute -bottom-5 -left-4 hidden rounded-2xl border border-line bg-paper px-4 py-3 shadow-[var(--shadow-soft)] sm:block">
+                <p className="font-display text-2xl leading-none tabular-nums">12</p>
+                <p className="mt-1 text-[11px] text-muted">day streak</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="border-t border-line bg-paper/50">
+        <div className="mx-auto w-full max-w-6xl px-5 py-16 lg:px-8 lg:py-20">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-widest text-rose-deep">What is inside</p>
+            <h2 className="mt-3 font-display text-3xl leading-tight tracking-tight lg:text-4xl">
+              Small questions, asked properly.
+            </h2>
+            <p className="mt-3 text-base leading-relaxed text-muted">
+              Not a quiz to win. A set of prompts that give the two of you somewhere to go.
+            </p>
+          </div>
+          <div className="stagger mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <div
+                key={feature.title}
+                className="rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-[var(--shadow-soft)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+              >
+                <h3 className="font-display text-lg leading-snug">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{feature.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="border-t border-line">
+        <div className="mx-auto w-full max-w-6xl px-5 py-16 lg:px-8 lg:py-20">
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-rose-deep">How it works</p>
+              <h2 className="mt-3 font-display text-3xl leading-tight tracking-tight lg:text-4xl">
+                Three steps to your first round.
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-muted">
+                It takes about two minutes to set up, and the first game is ready straight away.
+              </p>
+            </div>
+            <ol className="space-y-3">
+              {STEPS.map((step) => (
+                <li
+                  key={step.n}
+                  className="flex gap-4 rounded-[var(--radius-card)] border border-line bg-paper p-5"
+                >
+                  <span className="font-display text-2xl leading-none text-rose/70 tabular-nums">{step.n}</span>
+                  <span>
+                    <span className="block font-medium">{step.title}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-muted">{step.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="border-t border-line">
+        <div className="mx-auto w-full max-w-6xl px-5 py-16 lg:px-8 lg:py-20">
+          <div className="surface-wash relative overflow-hidden rounded-[2rem] border border-line px-6 py-12 text-center lg:px-12 lg:py-16">
+            <h2 className="mx-auto max-w-xl font-display text-3xl leading-tight tracking-tight lg:text-4xl">
+              Start with one question tonight.
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-base leading-relaxed text-muted">
+              Create an account, invite your person, and see what you both say.
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <Link
+                to="/join"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-rose-deep px-7 text-sm font-medium text-paper transition hover:brightness-110"
+              >
+                Create your account
+              </Link>
+              <Link
+                to="/login"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-paper px-7 text-sm font-medium transition hover:border-rose/60"
+              >
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-line">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-5 py-8 text-sm text-muted sm:flex-row lg:px-8">
+          <Wordmark compact />
+          <p>Made for two people, including the long-distance kind.</p>
+        </div>
+      </footer>
     </main>
   );
 }
 
 function AuthScreen({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <main className="min-h-dvh bg-cream px-6 py-10 text-ink">
+    <main className="surface-wash min-h-dvh bg-cream px-6 py-10 text-ink">
       <div className="mx-auto w-full max-w-md space-y-6">
-        <Logo />
-        <h1 className="font-display text-4xl">{title}</h1>
+        <Link to="/welcome" aria-label="Back to the start">
+          <Logo />
+        </Link>
+        <h1 className="font-display text-4xl tracking-tight">{title}</h1>
         {children}
       </div>
     </main>

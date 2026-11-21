@@ -3,65 +3,276 @@
 @theme {
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --color-cream: #f6f0e8;
+
+  --color-cream: #f7f2ec;
   --color-paper: #fffdfb;
-  --color-ink: #2a2226;
-  --color-muted: #7a6c71;
-  --color-line: #eadfd4;
-  --color-blush: #f3c9d4;
-  --color-rose: #b85c74;
-  --color-rose-deep: #8d3e56;
-  --color-lavender: #ddd2ee;
-  --color-lavender-deep: #6d5a86;
+  --color-ink: #241d21;
+  --color-muted: #7b6d72;
+  --color-line: #e9ded3;
+  --color-blush: #f6d3dc;
+  --color-rose: #c2687f;
+  --color-rose-deep: #8f3d55;
+  --color-lavender: #e0d6f0;
+  --color-lavender-deep: #6a5785;
+  --color-sage: #cfe0d2;
+  --color-sage-deep: #4a6b52;
+  --color-amber: #f2ddb8;
+  --color-amber-deep: #8a6420;
+
+  --radius-card: 1.5rem;
+  --shadow-soft: 0 1px 2px rgb(36 29 33 / 0.04), 0 8px 24px -12px rgb(36 29 33 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(36 29 33 / 0.05), 0 18px 40px -20px rgb(36 29 33 / 0.22);
 }
 
 html[data-theme="dark"] {
-  --color-cream: #161214;
-  --color-paper: #241c20;
-  --color-ink: #f6eee9;
-  --color-muted: #b3a4a8;
-  --color-line: #3a3034;
-  --color-blush: #5a3140;
-  --color-rose: #e7a0b4;
-  --color-rose-deep: #f0c3d0;
-  --color-lavender: #3a3148;
-  --color-lavender-deep: #ddd2ee;
+  --color-cream: #141013;
+  --color-paper: #1e181c;
+  --color-ink: #f7efea;
+  --color-muted: #a99ba0;
+  --color-line: #332a2f;
+  --color-blush: #4d2a37;
+  --color-rose: #e79fb3;
+  --color-rose-deep: #f2c4d1;
+  --color-lavender: #322a40;
+  --color-lavender-deep: #d9cdf0;
+  --color-sage: #26332a;
+  --color-sage-deep: #b6d3bd;
+  --color-amber: #3a2f1c;
+  --color-amber-deep: #e8c98a;
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 18px 40px -20px rgb(0 0 0 / 0.6);
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
+
   body {
     margin: 0;
     background: var(--color-cream);
     color: var(--color-ink);
     font-family: var(--font-sans);
     text-wrap: pretty;
+    transition: background-color 200ms ease, color 200ms ease;
   }
-  h1, h2, h3 {
+
+  h1,
+  h2,
+  h3 {
     text-wrap: balance;
     font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
   button:disabled {
     cursor: not-allowed;
   }
+
+  /* Visible, consistent keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-rose);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  ::selection {
+    background: var(--color-blush);
+    color: var(--color-ink);
+  }
+
+  /* Slim, unobtrusive scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
+@layer utilities {
+  /* Layered ambient wash used behind hero and dashboard surfaces. */
+  .surface-wash {
+    background-image:
+      radial-gradient(60rem 30rem at 12% -10%, color-mix(in oklab, var(--color-blush) 55%, transparent), transparent 70%),
+      radial-gradient(50rem 26rem at 92% 4%, color-mix(in oklab, var(--color-lavender) 50%, transparent), transparent 72%);
+  }
+
+  .surface-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-line) 60%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-line) 60%, transparent) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(70% 60% at 50% 0%, black, transparent 78%);
+  }
+
+  .glass {
+    background: color-mix(in oklab, var(--color-paper) 78%, transparent);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+
+  .text-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-rose-deep),
+      var(--color-rose) 45%,
+      var(--color-lavender-deep)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hairline {
+    box-shadow: inset 0 0 0 1px var(--color-line);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---------- Motion ---------- */
+
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-rose) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .rise {
-  animation: rise 220ms ease;
+  animation: rise 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.fade {
+  animation: fade 300ms ease both;
+}
+.pop {
+  animation: pop 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+.pulse-ring {
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+
+/* Staggered entrance for lists and grids. */
+.stagger > * {
+  animation: rise 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(8) { animation-delay: 280ms; }
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--color-line) 70%, transparent) 25%,
+    color-mix(in oklab, var(--color-paper) 90%, transparent) 50%,
+    color-mix(in oklab, var(--color-line) 70%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise { animation: none; }
+  html {
+    scroll-behavior: auto;
+  }
+  .rise,
+  .fade,
+  .pop,
+  .float-slow,
+  .pulse-ring,
+  .stagger > *,
+  .skeleton {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { ToastProvider } from "@/components/two/toast";
 import appCss from "../styles.css?url";
 
 const THEME_BOOT = `try{var t=localStorage.getItem("two-theme");var dark=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=dark?"dark":"light";}catch(e){}`;
@@ -36,7 +37,9 @@ export const Route = createRootRoute({
       <body>
         <PreviewHostBridge />
         <AuthProvider>
-          <Outlet />
+          <ToastProvider>
+            <Outlet />
+          </ToastProvider>
         </AuthProvider>
         <Scripts />
       </body>

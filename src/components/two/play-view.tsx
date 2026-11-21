@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bookmark, CircleHelp, Heart, Smile, Star } from "lucide-react";
+import { Bookmark, Check, CircleHelp, Heart, Smile, Star, X } from "lucide-react";
 import {
   advanceGame,
   cancelGame,
@@ -12,7 +12,18 @@ import {
   submitAnswer,
   toggleFavorite,
 } from "@/lib/two/api";
-import { Button, Card, ErrorNote, Loading } from "./ui";
+import { useToast } from "./toast";
+import {
+  Avatar,
+  Button,
+  Card,
+  ErrorNote,
+  Loading,
+  Pill,
+  ProgressBar,
+  TextArea,
+  cn,
+} from "./ui";
 
 type Play = Extract<Awaited<ReturnType<typeof getPlay>>, { ok: true }>;
 
@@ -24,6 +35,7 @@ const REACTIONS = [
 ] as const;
 
 export function PlayView({ gameId }: { gameId: string }) {
+  const toast = useToast();
   const [state, setState] = useState<Play | null>(null);
   const [error, setError] = useState("");
   const [body, setBody] = useState("");
@@ -32,6 +44,7 @@ export function PlayView({ gameId }: { gameId: string }) {
   const [predictionIndex, setPredictionIndex] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState("");
+  const [showReport, setShowReport] = useState(false);
 
   async function reload() {
     const result = await getPlay({ data: { gameId } });
@@ -61,6 +74,7 @@ export function PlayView({ gameId }: { gameId: string }) {
       void reload();
     }, 4000);
     return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.phase, gameId]);
 
   useEffect(() => {
@@ -72,11 +86,12 @@ export function PlayView({ gameId }: { gameId: string }) {
 
   if (!state && !error) return <Loading label="Opening the game" />;
   if (!state) return <ErrorNote>{error}</ErrorNote>;
-  const current = state;
 
+  const current = state;
   const question = state.question;
   const mirror = state.game.category === "mirror";
   const choiceType = question?.answerType === "choice" || question?.answerType === "rather";
+  const progress = state.game.total > 0 ? state.game.index : 0;
 
   async function send(skipped: boolean) {
     if (!question) return;
@@ -103,51 +118,91 @@ export function PlayView({ gameId }: { gameId: string }) {
 
   return (
     <div className="rise space-y-5">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <Link to="/games">Games</Link>
-        <span className="tabular-nums">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          to="/games"
+          className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-ink"
+        >
+          <span aria-hidden="true">←</span> Games
+        </Link>
+        <span className="text-sm text-muted tabular-nums">
           {state.phase === "completed" ? "Round complete" : `${state.game.index + 1} / ${state.game.total}`}
         </span>
       </div>
-      <p className="text-sm text-muted">
-        {state.game.categoryLabel} · {state.game.mode === "turns" ? "Take turns" : "Answer together"} · with {state.partner.displayName}
-      </p>
+
+      {state.phase !== "completed" && state.phase !== "cancelled" ? (
+        <ProgressBar value={progress} max={state.game.total} />
+      ) : null}
+
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <Pill tone="lavender">{state.game.categoryLabel}</Pill>
+        <Pill tone="neutral">{state.game.mode === "turns" ? "Take turns" : "Answer together"}</Pill>
+        <span className="ml-auto flex items-center gap-1.5">
+          <Avatar name={state.partner.displayName} src={state.partner.avatar} size="xs" />
+          <span className="truncate">{state.partner.displayName}</span>
+        </span>
+      </div>
+
       <ErrorNote>{error}</ErrorNote>
 
       {state.phase === "cancelled" ? (
         <Card>
-          <h1 className="font-display text-3xl">This round was cancelled.</h1>
-          <p className="mt-3 text-sm text-muted">Anything not yet revealed stays hidden.</p>
-          <Link to="/" className="mt-5 inline-flex min-h-11 items-center text-sm font-medium text-rose-deep">Back home</Link>
+          <h1 className="font-display text-3xl leading-tight">This round was cancelled.</h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted">Anything not yet revealed stays hidden.</p>
+          <Link
+            to="/"
+            className="mt-5 inline-flex min-h-11 items-center rounded-full bg-rose-deep px-5 text-sm font-medium text-paper"
+          >
+            Back home
+          </Link>
         </Card>
       ) : null}
 
       {state.phase === "wait_turn" ? (
-        <Card>
-          <h1 className="font-display text-3xl">Waiting for {state.partner.displayName}.</h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted">
-            It is their turn. You will get the question after they answer. Their words stay hidden until you have both submitted.
+        <Card className="text-center">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-lavender">
+            <Avatar name={state.partner.displayName} src={state.partner.avatar} size="md" />
+          </span>
+          <h1 className="mt-4 font-display text-2xl leading-tight">Waiting for {state.partner.displayName}.</h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
+            It is their turn. You will get the question after they answer. Their words stay hidden until you
+            have both submitted.
           </p>
+          <p className="mt-4 text-xs text-muted">This page checks again every few seconds.</p>
         </Card>
       ) : null}
 
       {state.phase === "answer" && question ? (
-        <Card>
+        <Card className="pop">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-xs uppercase tracking-widest text-muted">{question.answerType === "dare" ? "Dare" : question.answerType === "rather" ? "Would you rather" : "Question"}</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+              {question.answerType === "dare"
+                ? "Dare"
+                : question.answerType === "rather"
+                  ? "Would you rather"
+                  : "Question"}
+            </p>
             <button
               type="button"
               aria-label={state.saved ? "Remove from favourites" : "Save question"}
+              aria-pressed={state.saved}
               onClick={() => {
                 void toggleFavorite({ data: { questionId: question.id } }).then((result) => {
-                  if (result.ok) setState({ ...state, saved: result.saved });
+                  if (result.ok) {
+                    setState({ ...state, saved: result.saved });
+                    toast.success(result.saved ? "Saved to favourites." : "Removed from favourites.");
+                  }
                 });
               }}
+              className="-mr-1 rounded-full p-1.5 transition-colors hover:bg-cream"
             >
-              <Star className={state.saved ? "fill-rose text-rose" : "text-muted"} />
+              <Star className={cn("h-5 w-5", state.saved ? "fill-rose text-rose" : "text-muted")} />
             </button>
           </div>
+
           <h1 className="mt-3 font-display text-3xl leading-tight">{question.text}</h1>
+
           {choiceType ? (
             <div className="mt-5 space-y-2">
               {question.choices.map((option, index) => (
@@ -155,27 +210,42 @@ export function PlayView({ gameId }: { gameId: string }) {
                   key={option}
                   type="button"
                   onClick={() => setChoice(index)}
-                  className={index === choice ? "min-h-11 w-full rounded-2xl bg-rose-deep px-4 text-left text-sm text-paper" : "min-h-11 w-full rounded-2xl border border-line px-4 text-left text-sm"}
+                  aria-pressed={choice === index}
+                  className={cn(
+                    "min-h-12 w-full rounded-2xl border px-4 text-left text-sm transition-colors",
+                    index === choice
+                      ? "border-transparent bg-rose-deep text-paper"
+                      : "border-line bg-paper hover:border-rose/40",
+                  )}
                 >
                   {option}
                 </button>
               ))}
             </div>
           ) : (
-            <textarea
+            <TextArea
               value={body}
               onChange={(event) => setBody(event.target.value)}
               rows={question.answerType === "long" ? 5 : 3}
-              placeholder={question.answerType === "dare" ? "A short note after you do it, or skip." : "Your answer"}
-              className="mt-5 w-full rounded-2xl border border-line bg-cream px-4 py-3 text-base outline-none focus:border-rose"
+              placeholder={
+                question.answerType === "dare" ? "A short note after you do it, or skip." : "Your answer"
+              }
+              className="mt-5"
             />
           )}
+
           {mirror && !choiceType ? (
             <label className="mt-4 block text-sm">
               <span className="font-medium">What will {state.partner.displayName} say?</span>
-              <input value={prediction} onChange={(event) => setPrediction(event.target.value)} className="mt-2 min-h-11 w-full rounded-2xl border border-line px-4" />
+              <input
+                value={prediction}
+                onChange={(event) => setPrediction(event.target.value)}
+                placeholder="Your guess"
+                className="mt-2 min-h-11 w-full rounded-2xl border border-line bg-paper px-4 outline-none focus:border-rose focus:ring-4 focus:ring-rose/10"
+              />
             </label>
           ) : null}
+
           {mirror && choiceType ? (
             <div className="mt-4 space-y-2">
               <p className="text-sm font-medium">What will they pick?</p>
@@ -184,66 +254,122 @@ export function PlayView({ gameId }: { gameId: string }) {
                   key={`p-${option}`}
                   type="button"
                   onClick={() => setPredictionIndex(index)}
-                  className={index === predictionIndex ? "min-h-11 w-full rounded-2xl bg-lavender-deep px-4 text-left text-sm text-paper" : "min-h-11 w-full rounded-2xl bg-lavender px-4 text-left text-sm text-ink"}
+                  aria-pressed={predictionIndex === index}
+                  className={cn(
+                    "min-h-11 w-full rounded-2xl border px-4 text-left text-sm transition-colors",
+                    index === predictionIndex
+                      ? "border-transparent bg-lavender-deep text-paper"
+                      : "border-line bg-lavender/50 text-ink hover:border-lavender-deep/50",
+                  )}
                 >
                   {option}
                 </button>
               ))}
             </div>
           ) : null}
+
           <div className="mt-5 flex gap-3">
-            <Button className="flex-1" disabled={busy} onClick={() => void send(false)}>Submit</Button>
-            <Button variant="ghost" disabled={busy} onClick={() => void send(true)}>Skip</Button>
+            <Button className="flex-1" size="lg" loading={busy} disabled={busy} onClick={() => void send(false)}>
+              Submit
+            </Button>
+            <Button variant="ghost" size="lg" disabled={busy} onClick={() => void send(true)}>
+              Skip
+            </Button>
           </div>
         </Card>
       ) : null}
 
       {state.phase === "wait_partner" ? (
-        <Card>
-          <h1 className="font-display text-3xl">Your answer is in.</h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted">
-            {state.partner.displayName} has not submitted yet. You will not see their answer before they do. You can leave and come back.
+        <Card className="text-center">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-sage">
+            <Check className="h-6 w-6 text-sage-deep" aria-hidden="true" />
+          </span>
+          <h1 className="mt-4 font-display text-2xl leading-tight">Your answer is in.</h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
+            {state.partner.displayName} has not submitted yet. You will not see their answer before they do.
+            You can leave and come back.
           </p>
-          {state.mine ? <p className="mt-4 rounded-2xl bg-cream px-4 py-3 text-sm">{state.mine.skipped ? "You skipped." : state.mine.body}</p> : null}
+          {state.mine ? (
+            <p className="mt-4 rounded-2xl bg-cream px-4 py-3 text-left text-sm">
+              {state.mine.skipped ? "You skipped." : state.mine.body}
+            </p>
+          ) : null}
         </Card>
       ) : null}
 
       {state.phase === "reveal" && question && state.mine && state.partnerAnswer && state.tone ? (
         <div className="space-y-4">
-          <Card>
-            <p className="text-xs uppercase tracking-widest text-muted">Revealed</p>
+          <Card className="pop">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Revealed</p>
             <h1 className="mt-3 font-display text-3xl leading-tight">{question.text}</h1>
             <p className="mt-4 font-medium">{state.tone.title}</p>
-            <p className="mt-1 text-sm text-muted">{state.tone.detail}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted">{state.tone.detail}</p>
           </Card>
-          <AnswerCard name="You" text={state.mine.skipped ? "Skipped" : state.mine.body} guess={mirror ? state.mine.prediction : null} />
-          <AnswerCard name={state.partner.displayName} text={state.partnerAnswer.skipped ? "Skipped" : state.partnerAnswer.body} guess={mirror ? state.partnerAnswer.prediction : null} />
-          <div className="grid grid-cols-4 gap-2">
-            {REACTIONS.map((item) => {
-              const Icon = item.icon;
-              const active = state.reactions.mine === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    void reactToAnswer({ data: { gameId, position: state.game.index, kind: item.id } }).then(() => reload());
-                  }}
-                  className={active ? "min-h-16 rounded-2xl bg-blush text-xs text-ink" : "min-h-16 rounded-2xl border border-line text-xs text-muted"}
-                >
-                  <Icon className="mx-auto mb-1 h-4 w-4" aria-hidden="true" />
-                  {item.label}
-                </button>
-              );
-            })}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AnswerCard
+              name="You"
+              text={state.mine.skipped ? "Skipped" : state.mine.body}
+              guess={mirror ? state.mine.prediction : null}
+              tone="neutral"
+            />
+            <AnswerCard
+              name={state.partner.displayName}
+              text={state.partnerAnswer.skipped ? "Skipped" : state.partnerAnswer.body}
+              guess={mirror ? state.partnerAnswer.prediction : null}
+              tone="rose"
+            />
           </div>
+
+          <div>
+            <p className="mb-2 text-sm font-medium">React</p>
+            <div className="grid grid-cols-4 gap-2">
+              {REACTIONS.map((item) => {
+                const Icon = item.icon;
+                const active = state.reactions.mine === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      void reactToAnswer({ data: { gameId, position: state.game.index, kind: item.id } }).then(() =>
+                        reload(),
+                      );
+                    }}
+                    className={cn(
+                      "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border text-xs transition-colors",
+                      active
+                        ? "border-transparent bg-blush text-ink"
+                        : "border-line bg-paper text-muted hover:border-rose/40 hover:text-ink",
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4", active && "fill-rose text-rose-deep")} aria-hidden="true" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {state.partnerAnswer.id ? (
-            <button type="button" className="text-sm text-muted underline" onClick={() => void saveFavoriteAnswer({ data: { answerId: state.partnerAnswer!.id } })}>
+            <button
+              type="button"
+              className="text-sm text-muted underline transition-colors hover:text-rose-deep"
+              onClick={() =>
+                void saveFavoriteAnswer({ data: { answerId: state.partnerAnswer!.id } }).then(() =>
+                  toast.success("Their answer saved."),
+                )
+              }
+            >
               Save their answer
             </button>
           ) : null}
+
           <Button
             className="w-full"
+            size="lg"
+            loading={busy}
             onClick={() => {
               setBusy(true);
               void advanceGame({ data: { gameId, from: state.game.index } }).then((result) => {
@@ -260,51 +386,120 @@ export function PlayView({ gameId }: { gameId: string }) {
 
       {state.phase === "completed" && state.results ? (
         <div className="space-y-4">
-          <Card>
-            <h1 className="font-display text-3xl">Round finished.</h1>
-            <p className="mt-3 text-sm text-muted">
+          <Card className="surface-wash text-center">
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-paper">
+              <Check className="h-6 w-6 text-rose-deep" aria-hidden="true" />
+            </span>
+            <h1 className="mt-4 font-display text-3xl leading-tight">Round finished.</h1>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
               {state.results.choiceCompared > 0
                 ? `Same picks: ${state.results.samePicks} of ${state.results.choiceCompared}. Different picks are not a verdict.`
                 : "Open answers sit side by side. There is no compatibility score."}
             </p>
             {state.results.predictionChances > 0 ? (
-              <p className="mt-2 text-sm">You called {state.results.youCalled} of {state.results.predictionChances}. They called {state.results.theyCalled}.</p>
+              <p className="mt-3 text-sm">
+                You called {state.results.youCalled} of {state.results.predictionChances}. They called{" "}
+                {state.results.theyCalled}.
+              </p>
             ) : null}
           </Card>
-          {state.results.pairs.map((pair) => (
-            <Card key={pair.position}>
-              <p className="font-display text-xl">{pair.question.text}</p>
-              <p className="mt-3 text-sm font-medium">{pair.tone.title}</p>
-              <p className="mt-3 text-sm"><span className="text-muted">You · </span>{pair.mine.skipped ? "Skipped" : pair.mine.body}</p>
-              <p className="mt-1 text-sm"><span className="text-muted">{state.partner.displayName} · </span>{pair.partner.skipped ? "Skipped" : pair.partner.body}</p>
-            </Card>
-          ))}
-          <Link to="/progress" className="inline-flex min-h-11 items-center text-sm font-medium text-rose-deep">See progress</Link>
+
+          <div className="stagger space-y-3">
+            {state.results.pairs.map((pair) => (
+              <Card key={pair.position}>
+                <p className="font-display text-xl leading-snug">{pair.question.text}</p>
+                <p className="mt-2 text-sm font-medium">{pair.tone.title}</p>
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm">
+                    <span className="text-muted">You · </span>
+                    {pair.mine.skipped ? "Skipped" : pair.mine.body}
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted">{state.partner.displayName} · </span>
+                    {pair.partner.skipped ? "Skipped" : pair.partner.body}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/progress"
+              className="inline-flex min-h-11 items-center rounded-full bg-rose-deep px-5 text-sm font-medium text-paper"
+            >
+              See progress
+            </Link>
+            <Link
+              to="/games"
+              className="inline-flex min-h-11 items-center rounded-full border border-line bg-paper px-5 text-sm font-medium"
+            >
+              Play another
+            </Link>
+          </div>
         </div>
       ) : null}
 
       {state.phase !== "completed" && state.phase !== "cancelled" ? (
-        <div className="space-y-3 pt-2">
-          <form
-            className="flex gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const id = question?.id;
-              if (!id || report.trim().length < 3) return;
-              void reportQuestion({ data: { questionId: id, reason: report } }).then((result) => {
-                if (result.ok) {
-                  setReport("");
-                  setError("");
-                }
-              });
-            }}
-          >
-            <input value={report} onChange={(event) => setReport(event.target.value)} placeholder="Report this question" className="min-h-11 flex-1 rounded-full border border-line bg-paper px-4 text-sm" />
-            <Button variant="ghost" type="submit">Send</Button>
-          </form>
+        <div className="space-y-3 border-t border-line pt-4">
+          {showReport ? (
+            <form
+              className="flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const id = question?.id;
+                if (!id || report.trim().length < 3) return;
+                void reportQuestion({ data: { questionId: id, reason: report } }).then((result) => {
+                  if (result.ok) {
+                    setReport("");
+                    setShowReport(false);
+                    toast.success("Report sent. Thank you.");
+                  }
+                });
+              }}
+            >
+              <input
+                value={report}
+                onChange={(event) => setReport(event.target.value)}
+                placeholder="What is wrong with this question?"
+                aria-label="Report reason"
+                className="min-h-11 flex-1 rounded-full border border-line bg-paper px-4 text-sm outline-none focus:border-rose"
+              />
+              <Button variant="ghost" type="submit">
+                Send
+              </Button>
+              <Button variant="quiet" type="button" onClick={() => setShowReport(false)} aria-label="Cancel report">
+                <X className="h-4 w-4" />
+              </Button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowReport(true)}
+              className="text-xs text-muted underline transition-colors hover:text-ink"
+            >
+              Report this question
+            </button>
+          )}
           <div className="flex gap-4 text-sm text-muted">
-            <button type="button" onClick={() => void endGame({ data: { gameId } }).then((result) => { if (result.ok && "phase" in result) setState(result); })}>Finish here</button>
-            <button type="button" onClick={() => void cancelGame({ data: { gameId } }).then(() => reload())}>Cancel round</button>
+            <button
+              type="button"
+              className="transition-colors hover:text-ink"
+              onClick={() =>
+                void endGame({ data: { gameId } }).then((result) => {
+                  if (result.ok && "phase" in result) setState(result);
+                })
+              }
+            >
+              Finish here
+            </button>
+            <button
+              type="button"
+              className="transition-colors hover:text-ink"
+              onClick={() => void cancelGame({ data: { gameId } }).then(() => reload())}
+            >
+              Cancel round
+            </button>
           </div>
         </div>
       ) : null}
@@ -312,12 +507,27 @@ export function PlayView({ gameId }: { gameId: string }) {
   );
 }
 
-function AnswerCard({ name, text, guess }: { name: string; text: string; guess?: string | null }) {
+function AnswerCard({
+  name,
+  text,
+  guess,
+  tone,
+}: {
+  name: string;
+  text: string;
+  guess?: string | null;
+  tone: "neutral" | "rose";
+}) {
   return (
-    <Card className="bg-cream">
-      <p className="text-sm text-muted">{name}</p>
-      <p className="mt-2 text-base">{text}</p>
+    <div
+      className={cn(
+        "rounded-[var(--radius-card)] border p-4",
+        tone === "rose" ? "border-rose/30 bg-blush" : "border-line bg-cream",
+      )}
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">{name}</p>
+      <p className="mt-2 text-base leading-relaxed">{text}</p>
       {guess ? <p className="mt-2 text-sm text-muted">Guessed: {guess}</p> : null}
-    </Card>
+    </div>
   );
 }

@@ -20,6 +20,7 @@ import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as AppConnectRouteImport } from './routes/_app/connect'
 import { Route as AppDailyRouteImport } from './routes/_app/daily'
 import { Route as AppDeleteAccountRouteImport } from './routes/_app/delete-account'
+import { Route as AppEditProfileRouteImport } from './routes/_app/edit-profile'
 import { Route as AppFavoritesRouteImport } from './routes/_app/favorites'
 import { Route as AppGamesRouteImport } from './routes/_app/games'
 import { Route as AppHelpRouteImport } from './routes/_app/help'
@@ -90,6 +91,11 @@ const AppDailyRoute = AppDailyRouteImport.update({
 const AppDeleteAccountRoute = AppDeleteAccountRouteImport.update({
   id: '/delete-account',
   path: '/delete-account',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppEditProfileRoute = AppEditProfileRouteImport.update({
+  id: '/edit-profile',
+  path: '/edit-profile',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppFavoritesRoute = AppFavoritesRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/connect': typeof AppConnectRoute
   '/daily': typeof AppDailyRoute
   '/delete-account': typeof AppDeleteAccountRoute
+  '/edit-profile': typeof AppEditProfileRoute
   '/favorites': typeof AppFavoritesRoute
   '/games': typeof AppGamesRouteWithChildren
   '/help': typeof AppHelpRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/connect': typeof AppConnectRoute
   '/daily': typeof AppDailyRoute
   '/delete-account': typeof AppDeleteAccountRoute
+  '/edit-profile': typeof AppEditProfileRoute
   '/favorites': typeof AppFavoritesRoute
   '/help': typeof AppHelpRoute
   '/invites': typeof AppInvitesRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/_app/connect': typeof AppConnectRoute
   '/_app/daily': typeof AppDailyRoute
   '/_app/delete-account': typeof AppDeleteAccountRoute
+  '/_app/edit-profile': typeof AppEditProfileRoute
   '/_app/favorites': typeof AppFavoritesRoute
   '/_app/games': typeof AppGamesRouteWithChildren
   '/_app/help': typeof AppHelpRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/connect'
     | '/daily'
     | '/delete-account'
+    | '/edit-profile'
     | '/favorites'
     | '/games'
     | '/help'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/connect'
     | '/daily'
     | '/delete-account'
+    | '/edit-profile'
     | '/favorites'
     | '/help'
     | '/invites'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/_app/connect'
     | '/_app/daily'
     | '/_app/delete-account'
+    | '/_app/edit-profile'
     | '/_app/favorites'
     | '/_app/games'
     | '/_app/help'
@@ -443,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/delete-account'
       fullPath: '/delete-account'
       preLoaderRoute: typeof AppDeleteAccountRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/edit-profile': {
+      id: '/_app/edit-profile'
+      path: '/edit-profile'
+      fullPath: '/edit-profile'
+      preLoaderRoute: typeof AppEditProfileRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/favorites': {
@@ -586,6 +605,7 @@ interface AppRouteRouteChildren {
   AppConnectRoute: typeof AppConnectRoute
   AppDailyRoute: typeof AppDailyRoute
   AppDeleteAccountRoute: typeof AppDeleteAccountRoute
+  AppEditProfileRoute: typeof AppEditProfileRoute
   AppFavoritesRoute: typeof AppFavoritesRoute
   AppGamesRoute: typeof AppGamesRouteWithChildren
   AppHelpRoute: typeof AppHelpRoute
@@ -608,6 +628,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppConnectRoute: AppConnectRoute,
   AppDailyRoute: AppDailyRoute,
   AppDeleteAccountRoute: AppDeleteAccountRoute,
+  AppEditProfileRoute: AppEditProfileRoute,
   AppFavoritesRoute: AppFavoritesRoute,
   AppGamesRoute: AppGamesRouteWithChildren,
   AppHelpRoute: AppHelpRoute,
